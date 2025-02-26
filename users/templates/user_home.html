@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeroZip - User Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen flex">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-lg fixed h-full">
+            <div class="flex items-center space-x-3 px-6 py-4 border-b">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-paper-plane text-white"></i>
+                </div>
+                <span class="text-xl font-bold text-blue-600">AeroZip</span>
+            </div>
+            
+            <nav class="px-4 py-4">
+                <div class="space-y-2">
+                    <a href="#" class="flex items-center px-4 py-3 text-blue-600 bg-blue-50 rounded-lg">
+                        <i class="fas fa-home w-5"></i>
+                        <span class="ml-3">Dashboard</span>
+                    </a>
+                    <a href="{% url 'my' %}" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+                        <i class="fas fa-box w-5"></i>
+                        <span class="ml-3">My Shipments</span>
+                    </a>
+                    <a href="{% url 'ship' %}" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+                        <i class="fas fa-plus-circle w-5"></i>
+                        <span class="ml-3">New Shipment</span>
+                    </a>
+                    <a href="#" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+                        <i class="fas fa-address-book w-5"></i>
+                        <span class="ml-3">Address Book</span>
+                    </a>
+                    <a href="#" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+                        <i class="fas fa-history w-5"></i>
+                        <span class="ml-3">History</span>
+                    </a>
+                    <a href="#" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+                        <i class="fas fa-star w-5"></i>
+                        <span class="ml-3">Reviews</span>
+                    </a>
+                    <a href="#" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+                        <i class="fas fa-cog w-5"></i>
+                        <span class="ml-3">Settings</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 ml-64">
+            {% block content %}
+            <!-- Top Bar -->
+            <header class="bg-white shadow-sm">
+                <div class="flex items-center justify-between px-8 py-4">
+                    <div class="flex items-center space-x-4">
+                        <h1 class="text-2xl font-bold text-gray-900">Welcome back, John!</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="relative">
+                            <i class="fas fa-bell text-gray-600 text-xl"></i>
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
+                        </button>
+                        <div class="flex items-center space-x-3">
+                            <img src="/api/placeholder/32/32" alt="Profile" class="w-8 h-8 rounded-full">
+                            <span class="text-gray-700">{{request.user.name}}</span>
+                        </div>
+                        <a href="{% url 'logout' %}" class="flex items-center px-4 py-3 text-red-600 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-sign-out-alt w-5"></i> <!-- 'fa-sign-out-alt' is the updated icon for logout -->
+                            <span class="ml-3">Log Out</span>
+                        </a>
+                        
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Dashboard Content -->
+            <div class="p-8">
+                <!-- Quick Actions -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <button class="bg-blue-600 text-white p-6 rounded-xl hover:bg-blue-700 transition-colors">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-plus text-2xl"></i>
+                            </div>
+                            <div class="text-left">
+                                <h3 class="text-lg font-semibold">Create New Shipment</h3>
+                                <p class="text-blue-100">Book a new delivery</p>
+                            </div>
+                        </div>
+                    </button>
+                    
+                    <button class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-search text-purple-600 text-2xl"></i>
+                            </div>
+                            <div class="text-left">
+                                <a href="{% url 'track' %}" class="text-lg font-semibold text-gray-900">Track Package</a>
+                                <p class="text-gray-500">Check shipment status</p>
+                            </div>
+                        </div>
+                    </button>
+                    
+                    <button class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-history text-green-600 text-2xl"></i>
+                            </div>
+                            <div class="text-left">
+                                <h3 class="text-lg font-semibold text-gray-900">Recent Activity</h3>
+                                <p class="text-gray-500">View your history</p>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Active Shipments -->
+                <div class="bg-white rounded-xl shadow-sm mb-8">
+                    <div class="p-6 border-b border-gray-100">
+                        <h2 class="text-xl font-bold text-gray-900">Active Shipments</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-6">
+                            <!-- Shipment Card 1 -->
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="flex items-center space-x-3 mb-3">
+                                            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">In Transit</span>
+                                            <span class="text-gray-500">#AZ892345</span>
+                                        </div>
+                                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Package to New York</h3>
+                                        <div class="text-gray-500">
+                                            <p>Estimated delivery: Feb 21, 2024</p>
+                                            <p>Current location: Chicago Distribution Center</p>
+                                        </div>
+                                    </div>
+                                    <button class="text-blue-600 hover:text-blue-700">View Details</button>
+                                </div>
+                                <div class="mt-4">
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-600 h-2 rounded-full" style="width: 75%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Shipment Card 2 -->
+                            <div class="border border-gray-200 rounded-lg p-6">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="flex items-center space-x-3 mb-3">
+                                            <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">Out for Delivery</span>
+                                            <span class="text-gray-500">#AZ892346</span>
+                                        </div>
+                                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Package to Los Angeles</h3>
+                                        <div class="text-gray-500">
+                                            <p>Estimated delivery: Feb 19, 2024</p>
+                                            <p>Current location: Local Delivery Center</p>
+                                        </div>
+                                    </div>
+                                    <button class="text-blue-600 hover:text-blue-700">View Details</button>
+                                </div>
+                                <div class="mt-4">
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-600 h-2 rounded-full" style="width: 90%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity and Stats -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Recent Activity -->
+                    <div class="bg-white rounded-xl shadow-sm">
+                        <div class="p-6 border-b border-gray-100">
+                            <h2 class="text-xl font-bold text-gray-900">Recent Activity</h2>
+                        </div>
+                        <div class="p-6">
+                            <div class="space-y-6">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                                        <i class="fas fa-check text-green-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-900 font-medium">Package Delivered</p>
+                                        <p class="text-gray-500 text-sm">Package #AZ892344 was delivered successfully</p>
+                                        <p class="text-gray-400 text-sm">2 hours ago</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                                        <i class="fas fa-box text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-900 font-medium">New Shipment Created</p>
+                                        <p class="text-gray-500 text-sm">You created a new shipment #AZ892346</p>
+                                        <p class="text-gray-400 text-sm">5 hours ago</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statistics -->
+                    <div class="bg-white rounded-xl shadow-sm">
+                        <div class="p-6 border-b border-gray-100">
+                            <h2 class="text-xl font-bold text-gray-900">Monthly Statistics</h2>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-2 gap-6">
+                                <div>
+                                    <p class="text-gray-500 mb-1">Total Shipments</p>
+                                    <p class="text-2xl font-bold text-gray-900">24</p>
+                                    <p class="text-green-500 text-sm">+12% from last month</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 mb-1">Delivered</p>
+                                    <p class="text-2xl font-bold text-gray-900">21</p>
+                                    <p class="text-green-500 text-sm">98% success rate</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 mb-1">In Transit</p>
+                                    <p class="text-2xl font-bold text-gray-900">2</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 mb-1">Total Spent</p>
+                                    <p class="text-2xl font-bold text-gray-900">$645</p>
+                                    <p class="text-green-500 text-sm">+5% from last month</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endblock %}
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,348 @@
+{% extends 'user_home.html' %}
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Back Button and Header -->
+        <div class="mb-6">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <a href="{% url 'my' %}" class="mr-4 text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-arrow-left"></i>
+                        </a>
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Shipment Details</h1>
+                            <p class="mt-1 text-sm text-gray-500">Tracking Number: {{ shipment.tracking_number }}</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <a href="" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="fas fa-map-marker-alt mr-2 text-green-600"></i>
+                            Track Shipment
+                        </a>
+                        {% if shipment.status == 'pending' or shipment.status == 'processing' %}
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <i class="fas fa-cog mr-2"></i>
+                                Actions
+                                <i class="fas fa-chevron-down ml-2"></i>
+                            </button>
+                            <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
+                                <div class="py-1" role="none">
+                                    <a href="" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Edit Shipment</a>
+                                    <a href="" class="text-red-600 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Cancel Shipment</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shipment Status and Route -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <!-- Shipment Status Card -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Shipment Status</h2>
+                <div class="flex items-center mb-4">
+                    {% if shipment.status == 'pending' %}
+                    <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                        Pending
+                    </span>
+                    {% elif shipment.status == 'processing' %}
+                    <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                        Processing
+                    </span>
+                    {% elif shipment.status == 'in_transit' %}
+                    <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                        In Transit
+                    </span>
+                    {% elif shipment.status == 'out_for_delivery' %}
+                    <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                        Out for Delivery
+                    </span>
+                    {% elif shipment.status == 'delivered' %}
+                    <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                        Delivered
+                    </span>
+                    {% elif shipment.status == 'cancelled' %}
+                    <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                        Cancelled
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Created on:</span>
+                        <span class="text-sm font-medium">{{ shipment.created_at|date:"M d, Y" }}</span>
+                    </div>
+                    
+                    {% if shipment.status == 'delivered' %}
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Delivered on:</span>
+                        <span class="text-sm font-medium">{{ shipment.updated_at|date:"M d, Y" }}</span>
+                    </div>
+                    {% else %}
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Estimated delivery:</span>
+                        <span class="text-sm font-medium">{{ shipment.estimated_delivery|date:"M d, Y" }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Shipment type:</span>
+                        <span class="text-sm font-medium">{{ shipment.get_shipment_type_display }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Shipping method:</span>
+                        <span class="text-sm font-medium">{{ shipment.get_shipping_speed_display }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Weight:</span>
+                        <span class="text-sm font-medium">{{ shipment.weight }} kg</span>
+                    </div>
+                    
+                    {% if shipment.dimensions %}
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Dimensions:</span>
+                        <span class="text-sm font-medium">{{ shipment.dimensions }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if shipment.shipping_cost %}
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Shipping cost:</span>
+                        <span class="text-sm font-medium">${{ shipment.shipping_cost }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mt-6 space-y-3">
+                    <a href="" class="flex items-center justify-center w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <i class="fas fa-tag mr-2"></i>
+                        Download Shipping Label
+                    </a>
+                    <a href="" class="flex items-center justify-center w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <i class="fas fa-receipt mr-2"></i>
+                        View Receipt
+                    </a>
+                </div>
+            </div>
+
+            <!-- Route Map (Placeholder) -->
+            <div class="bg-white rounded-lg shadow-sm p-6 lg:col-span-2">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Shipment Route</h2>
+                <div class="bg-gray-100 rounded-lg p-4 h-64 flex items-center justify-center">
+                    <div class="text-center">
+                        <i class="fas fa-map-marked-alt text-gray-400 text-4xl mb-4"></i>
+                        <p class="text-gray-500">Interactive map view available when tracking</p>
+                        <a href="" class="mt-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="fas fa-map-marker-alt mr-2"></i>
+                            Track This Shipment
+                        </a>
+                    </div>
+                </div>
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <h3 class="font-medium text-blue-700 mb-2">From</h3>
+                        <p class="text-gray-700 text-sm font-medium">{{ shipment.sender_address.full_name }}</p>
+                        <p class="text-gray-500 text-sm">{{ shipment.sender_address.address_line1 }}</p>
+                        {% if shipment.sender_address.address_line2 %}
+                        <p class="text-gray-500 text-sm">{{ shipment.sender_address.address_line2 }}</p>
+                        {% endif %}
+                        <p class="text-gray-500 text-sm">{{ shipment.sender_address.city }}, {{ shipment.sender_address.state }} {{ shipment.sender_address.postal_code }}</p>
+                        <p class="text-gray-500 text-sm">{{ shipment.sender_address.country }}</p>
+                        {% if shipment.from_airport_code %}
+                        <p class="text-gray-700 text-sm mt-2">
+                            <i class="fas fa-plane-departure mr-1"></i> 
+                            {{ shipment.from_airport_code }} - {{ shipment.from_airport_place }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-4">
+                        <h3 class="font-medium text-purple-700 mb-2">To</h3>
+                        <p class="text-gray-700 text-sm font-medium">{{ shipment.recipient_address.full_name }}</p>
+                        <p class="text-gray-500 text-sm">{{ shipment.recipient_address.address_line1 }}</p>
+                        {% if shipment.recipient_address.address_line2 %}
+                        <p class="text-gray-500 text-sm">{{ shipment.recipient_address.address_line2 }}</p>
+                        {% endif %}
+                        <p class="text-gray-500 text-sm">{{ shipment.recipient_address.city }}, {{ shipment.recipient_address.state }} {{ shipment.recipient_address.postal_code }}</p>
+                        <p class="text-gray-500 text-sm">{{ shipment.recipient_address.country }}</p>
+                        {% if shipment.to_airport_code %}
+                        <p class="text-gray-700 text-sm mt-2">
+                            <i class="fas fa-plane-arrival mr-1"></i> 
+                            {{ shipment.to_airport_code }} - {{ shipment.to_airport_place }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Package Details and Tracking History -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <!-- Package Details -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Package Details</h2>
+                
+                <div class="space-y-4">
+                    {% if shipment.package_items.all %}
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">Package Contents</h3>
+                        <ul class="space-y-3">
+                            {% for item in shipment.package_items.all %}
+                            <li class="flex justify-between">
+                                <span class="text-sm text-gray-600">{{ item.description }}</span>
+                                <span class="text-sm text-gray-600">
+                                    {% if item.quantity > 1 %}{{ item.quantity }}x {% endif %}
+                                    {% if item.value %}${{ item.value }}{% endif %}
+                                </span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <hr class="border-gray-200">
+                    {% endif %}
+                    
+                    {% if shipment.special_instructions %}
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">Special Instructions</h3>
+                        <p class="text-sm text-gray-600">{{ shipment.special_instructions }}</p>
+                    </div>
+                    <hr class="border-gray-200">
+                    {% endif %}
+                    
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">Package Information</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <p class="text-xs text-gray-500">Package Type</p>
+                                <p class="text-sm text-gray-700">{{ shipment.get_package_type_display|default:"Standard" }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Weight</p>
+                                <p class="text-sm text-gray-700">{{ shipment.weight }} kg</p>
+                            </div>
+                            {% if shipment.dimensions %}
+                            <div class="col-span-2">
+                                <p class="text-xs text-gray-500">Dimensions</p>
+                                <p class="text-sm text-gray-700">{{ shipment.dimensions }}</p>
+                            </div>
+                            {% endif %}
+                            {% if shipment.declared_value %}
+                            <div class="col-span-2">
+                                <p class="text-xs text-gray-500">Declared Value</p>
+                                <p class="text-sm text-gray-700">${{ shipment.declared_value }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if shipment.insurance %}
+                    <hr class="border-gray-200">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">Insurance</h3>
+                        <div class="flex items-center">
+                            <i class="fas fa-shield-alt text-green-600 mr-2"></i>
+                            <span class="text-sm text-gray-700">Insured for ${{ shipment.insurance_amount }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tracking History -->
+            <div class="bg-white rounded-lg shadow-sm p-6 lg:col-span-2">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Tracking History</h2>
+                
+                {% if shipment.tracking_events.all %}
+                <div class="relative">
+                    <!-- Vertical Line -->
+                    <div class="absolute left-5 top-4 bottom-0 w-0.5 bg-gray-200"></div>
+                    
+                    <div class="space-y-6">
+                        {% for event in shipment.tracking_events.all %}
+                        <div class="relative pl-12">
+                            <!-- Status Circle -->
+                            <div class="absolute left-0 top-0 rounded-full w-10 h-10 flex items-center justify-center 
+                                {% if event.status_type == 'delivered' %}bg-purple-100{% elif event.status_type == 'in_transit' %}bg-green-100{% elif event.status_type == 'exception' %}bg-red-100{% else %}bg-gray-100{% endif %}">
+                                {% if event.status_type == 'delivered' %}
+                                <i class="fas fa-check-circle text-purple-600"></i>
+                                {% elif event.status_type == 'in_transit' %}
+                                <i class="fas fa-truck text-green-600"></i>
+                                {% elif event.status_type == 'exception' %}
+                                <i class="fas fa-exclamation-triangle text-red-600"></i>
+                                {% elif event.status_type == 'processing' %}
+                                <i class="fas fa-cog text-blue-600"></i>
+                                {% else %}
+                                <i class="fas fa-circle text-gray-600"></i>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Status Content -->
+                            <div class="pb-2">
+                                <p class="text-sm font-medium text-gray-900">{{ event.description }}</p>
+                                <div class="flex space-x-4 text-xs text-gray-500 mt-1">
+                                    <span>
+                                        <i class="far fa-clock mr-1"></i>
+                                        {{ event.timestamp|date:"M d, Y" }} at {{ event.timestamp|time:"H:i" }}
+                                    </span>
+                                    {% if event.location %}
+                                    <span>
+                                        <i class="fas fa-map-marker-alt mr-1"></i>
+                                        {{ event.location }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                {% if event.notes %}
+                                <p class="text-xs text-gray-500 mt-1 italic">{{ event.notes }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-8 bg-gray-50 rounded-lg">
+                    <div class="text-gray-400 mb-3">
+                        <i class="fas fa-truck-loading text-4xl"></i>
+                    </div>
+                    <h3 class="text-base font-medium text-gray-700">No tracking events yet</h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                        Tracking information will appear here once your shipment is processed
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Related Actions -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <a href="" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-undo-alt mr-2 text-yellow-600"></i>
+                    Create Return
+                </a>
+                <a href="" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-copy mr-2 text-blue-600"></i>
+                    Ship Similar Package
+                </a>
+                <a href="" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-exclamation-circle mr-2 text-red-600"></i>
+                    Report an Issue
+                </a>
+                <a href="" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-headset mr-2 text-purple-600"></i>
+                    Contact Support
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

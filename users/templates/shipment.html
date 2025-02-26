@@ -1,0 +1,365 @@
+{% extends 'user_home.html'  %}
+{% block content %}
+
+    <div class="min-h-screen flex">
+
+
+        <!-- Main Content -->
+        <div class="flex-1 ml-3">
+            <!-- Top Bar -->
+            
+
+            <!-- Form Content -->
+            <div class="p-8">
+                <div class="bg-white rounded-xl shadow-sm">
+                    <div class="p-6">
+                        <form method="post" class="space-y-6" action="{% url 'ship' %}">
+                            {% csrf_token %}
+                            
+                            <!-- Progress Steps -->
+                            <div class="mb-8">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center">1</div>
+                                        <div class="ml-2 text-blue-600 font-medium">Addresses</div>
+                                    </div>
+                                    <div class="flex-1 mx-4 h-1 bg-gray-200">
+                                        <div class="w-1/3 h-full bg-blue-600"></div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">2</div>
+                                        <div class="ml-2 text-gray-500 font-medium">Package Details</div>
+                                    </div>
+                                    <div class="flex-1 mx-4 h-1 bg-gray-200"></div>
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">3</div>
+                                        <div class="ml-2 text-gray-500 font-medium">Shipping Options</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="border rounded-lg p-6">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Sender Information</h3>
+                                    <div class="space-y-4">
+                                        <div class="relative">
+                                            <select name="sender_address" class="block w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                                <option value="">Select sender address</option>
+                                                {% for address in addresses %}
+                                                <option value="{{ address.id }}">{{ address.name }} - {{ address.city }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <button type="button" class="text-blue-600 hover:text-blue-700 flex items-center space-x-2" onclick="showAddAddressModal('sender')">
+                                            <i class="fas fa-plus"></i>
+                                            <span>Add New Address</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="border rounded-lg p-6">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Recipient Information</h3>
+                                    <div class="space-y-4">
+                                        <div class="relative">
+                                            <select name="recipient_address" class="block w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                                <option value="">Select recipient address</option>
+                                                {% for address in addresses %}
+                                                <option value="{{ address.id }}">{{ address.name }} - {{ address.city }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <button type="button" class="text-blue-600 hover:text-blue-700 flex items-center space-x-2" onclick="showAddAddressModal('recipient')">
+                                            <i class="fas fa-plus"></i>
+                                            <span>Add New Address</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="border rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Select Airport Type</h3>
+                                <div class="flex space-x-4">
+                                    <label class="flex items-center space-x-2">
+                                        <input type="radio" name="shipment_type" value="international" class="focus:ring-blue-500" onchange="updateAirportSelection()" checked>
+                                        <span>International</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2">
+                                        <input type="radio" name="shipment_type" value="domestic" class="focus:ring-blue-500" onchange="updateAirportSelection()">
+                                        <span>Domestic</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
+                                <!-- Start Airport Selection -->
+                                <div class="border rounded-lg p-6">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">From </h3>
+                                    <div class="space-y-4">
+                                        <div class="relative">
+                                            <select name="from_airport" id="start_airport" class="block w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                                <option value="">Select  airport</option>
+                                                {% for airport in international %}
+                                                <option value="{{ airport.code }}" class="international-option">{{ airport.name }} - {{ airport.code }}</option>
+                                                {% endfor %}
+                                                {% for airport in domestic %}
+                                                <option value="{{ airport.code }}" class="domestic-option hidden">{{ airport.name }} - {{ airport.code }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            
+                                <!-- End Airport Selection -->
+                                <div class="border rounded-lg p-6">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">To</h3>
+                                    <div class="space-y-4">
+                                        <div class="relative">
+                                            <select name="to_airport" id="end_airport" class="block w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                                <option value="">Select  airport</option>
+                                                {% for airport in international %}
+                                                <option value="{{ airport.code }}" class="international-option">{{ airport.name }} - {{ airport.code }}</option>
+                                                {% endfor %}
+                                                {% for airport in domestic %}
+                                                <option value="{{ airport.code }}" class="domestic-option hidden">{{ airport.name }} - {{ airport.code }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <script>
+                            function updateAirportSelection() {
+                                let selectedType = document.querySelector('input[name="shipment_type"]:checked').value;
+                            
+                                let internationalOptions = document.querySelectorAll('.international-option');
+                                let domesticOptions = document.querySelectorAll('.domestic-option');
+                            
+                                if (selectedType === "international") {
+                                    internationalOptions.forEach(option => option.classList.remove("hidden"));
+                                    domesticOptions.forEach(option => option.classList.add("hidden"));
+                                } else {
+                                    internationalOptions.forEach(option => option.classList.add("hidden"));
+                                    domesticOptions.forEach(option => option.classList.remove("hidden"));
+                                }
+                            }
+                            </script>
+                            
+                            <!-- Package Details -->
+                            <div class="border rounded-lg p-6 mt-8">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Package Details</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Weight(Kg)</label>
+                                        <input type="number" name="weight" step="0.01" min="0.01" class="block w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                    </div>
+                                    
+                                </div>
+                            </div>
+
+                            <!-- Shipping Options -->
+                            <div class="border rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Shipping Options</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div class="border rounded-lg p-4 cursor-pointer hover:border-blue-500">
+                                        <input type="radio" name="shipping_speed" value="standard" class="hidden" id="standard">
+                                        <label for="standard" class="cursor-pointer">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="font-medium">Standard Shipping</span>
+                                                <span class="text-gray-500"></span>
+                                            </div>
+                                            <p class="text-sm text-gray-500">Delivery in 5-7 business days</p>
+                                        </label>
+                                    </div>
+                                    <div class="border rounded-lg p-4 cursor-pointer hover:border-blue-500">
+                                        <input type="radio" name="shipping_speed" value="express" class="hidden" id="express">
+                                        <label for="express" class="cursor-pointer">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="font-medium">Express Shipping</span>
+                                                <span class="text-gray-500">+20%</span>
+                                            </div>
+                                            <p class="text-sm text-gray-500">Delivery in 2-3 business days</p>
+                                        </label>
+                                    </div>
+                                    <div class="border rounded-lg p-4 cursor-pointer hover:border-blue-500">
+                                        <input type="radio" name="shipping_speed" value="overnight" class="hidden" id="overnight">
+                                        <label for="overnight" class="cursor-pointer">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="font-medium">Overnight Shipping</span>
+                                                <span class="text-gray-500">+50%</span>
+                                            </div>
+                                            <p class="text-sm text-gray-500">Next business day delivery</p>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Notes -->
+                            <div class="border rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Additional Notes</h3>
+                                <textarea name="notes" rows="4" class="block w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="Add any special instructions or notes here..."></textarea>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="flex justify-end space-x-4">
+                                {% comment %} <button type="button" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                                    Save as Draft
+                                </button> {% endcomment %}
+                                <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                    Create Shipment
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Address Modal -->
+   <div id="addAddressModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Add New Address</h3>
+                <form id="addAddressForm" class="space-y-4" method="post">
+                    {% csrf_token %}
+                    {{form.errors}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                        <input type="text" name="name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Street Address</label>
+                        <input type="text" name="street_address" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">City</label>
+                            <input type="text" name="city" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">State</label>
+                            <input type="text" name="state" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Country</label>
+                            <input type="text" name="country" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Postal Code</label>
+                            <input type="text" name="postal_code" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Phone Number</label>
+                        <input type="tel" name="phone" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" name="is_default" id="is_default" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <label for="is_default" class="ml-2 text-sm text-gray-700">Set as default address</label>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-5">
+                        <button type="button" onclick="closeAddressModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            Add Address
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for form handling -->
+    <script>
+        // Shipping option selection handling
+        document.querySelectorAll('input[name="shipping_speed"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Remove border highlight from all options
+                document.querySelectorAll('input[name="shipping_speed"]').forEach(r => {
+                    r.parentElement.classList.remove('border-blue-500');
+                    r.parentElement.classList.add('border-gray-200');
+                });
+                
+                // Add border highlight to selected option
+                if (this.checked) {
+                    this.parentElement.classList.remove('border-gray-200');
+                    this.parentElement.classList.add('border-blue-500');
+                }
+            });
+        });
+
+        // Modal handling
+        let currentAddressType = null;
+        
+        function showAddAddressModal(type) {
+            currentAddressType = type;
+            document.getElementById('addAddressModal').classList.remove('hidden');
+        }
+
+        function closeAddressModal() {
+            document.getElementById('addAddressModal').classList.add('hidden');
+            document.getElementById('addAddressForm').reset();
+        }
+
+        // Handle address form submission
+        document.getElementById('addAddressForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+        
+            const formData = new FormData(this);
+            const formObject = Object.fromEntries(formData.entries());
+        
+            // Ensure is_default is treated as a boolean
+            formObject.is_default = formObject.is_default === "on";
+        
+            try {
+                const response = await fetch("{% url 'address' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify(formObject)
+                });
+        
+                const result = await response.json();
+                console.log("Server Response:", result); 
+        
+                if (response.ok && result.success) {
+                    alert('Address added successfully!');
+                    closeAddressModal();
+                } else {
+                    alert(`Error: ${result.message}`);
+                    console.error('Error Response:', result);
+                }
+            } catch (error) {
+                alert('Error adding address. Please try again.');
+                console.error('Fetch Error:', error);
+            }
+        });
+        
+        
+
+        // Form validation before submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Basic validation
+            const requiredFields = ['sender_address', 'recipient_address',  'weight', 'shipping_speed'];
+            const missingFields = requiredFields.filter(field => !this.elements[field].value);
+            
+            if (missingFields.length > 0) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // Submit form if validation passes
+            this.submit();
+        });
+    </script>
+</body>
+</html>
+
+                    {% endblock %}
