@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AeroZip - User Dashboard</title>
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'images/logo.webp' %}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -64,22 +65,17 @@
             <header class="bg-white shadow-sm">
                 <div class="flex items-center justify-between px-8 py-4">
                     <div class="flex items-center space-x-4">
-                        <h1 class="text-2xl font-bold text-gray-900">Welcome back, John!</h1>
+                        <h1 class="text-2xl font-bold text-gray-900">Welcome back, {{ request.user.name }}!</h1>
                     </div>
                     <div class="flex items-center space-x-4">
-                        {% comment %} <button class="relative">
-                            <i class="fas fa-bell text-gray-600 text-xl"></i>
-                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
-                        </button> {% endcomment %}
                         <div class="flex items-center space-x-3">
                             <img src="{% static 'images/profile.png' %}" alt="Profile" class="w-11 h-10 rounded-full">
-                            <span class="text-gray-700">{{request.user.name}}</span>
+                            <span class="text-gray-700">{{ request.user.name }}</span>
                         </div>
                         <a href="{% url 'logout' %}" class="flex items-center px-4 py-3 text-red-600 hover:bg-gray-50 rounded-lg">
-                            <i class="fas fa-sign-out-alt w-5"></i> <!-- 'fa-sign-out-alt' is the updated icon for logout -->
+                            <i class="fas fa-sign-out-alt w-5"></i>
                             <span class="ml-3">Log Out</span>
                         </a>
-                        
                     </div>
                 </div>
             </header>
@@ -88,7 +84,7 @@
             <div class="p-8">
                 <!-- Quick Actions -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <button class="bg-blue-600 text-white p-6 rounded-xl hover:bg-blue-700 transition-colors">
+                    <a href="{% url 'ship' %}" class="bg-blue-600 text-white p-6 rounded-xl hover:bg-blue-700 transition-colors">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
                                 <i class="fas fa-plus text-2xl"></i>
@@ -98,21 +94,21 @@
                                 <p class="text-blue-100">Book a new delivery</p>
                             </div>
                         </div>
-                    </button>
+                    </a>
                     
-                    <button class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                    <a href="{% url 'track' %}" class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                                 <i class="fas fa-search text-purple-600 text-2xl"></i>
                             </div>
                             <div class="text-left">
-                                <a href="{% url 'track' %}" class="text-lg font-semibold text-gray-900">Track Package</a>
+                                <h3 class="text-lg font-semibold text-gray-900">Track Package</h3>
                                 <p class="text-gray-500">Check shipment status</p>
                             </div>
                         </div>
-                    </button>
+                    </a>
                     
-                    <button class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                    <a href="{% url 'history' %}" class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                                 <i class="fas fa-history text-green-600 text-2xl"></i>
@@ -122,9 +118,9 @@
                                 <p class="text-gray-500">View your history</p>
                             </div>
                         </div>
-                    </button>
+                    </a>
                 </div>
-
+            
                 <!-- Active Shipments -->
                 <div class="bg-white rounded-xl shadow-sm mb-8">
                     <div class="p-6 border-b border-gray-100">
@@ -132,55 +128,58 @@
                     </div>
                     <div class="p-6">
                         <div class="space-y-6">
-                            <!-- Shipment Card 1 -->
-                            <div class="border border-gray-200 rounded-lg p-6">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <div class="flex items-center space-x-3 mb-3">
-                                            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">In Transit</span>
-                                            <span class="text-gray-500">#AZ892345</span>
+                            {% if active_shipments %}
+                                {% for shipment in active_shipments %}
+                                    <div class="border border-gray-200 rounded-lg p-6">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <div class="flex items-center space-x-3 mb-3">
+                                                    {% if shipment.status == 'pending' %}
+                                                        <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">Pending</span>
+                                                    {% elif shipment.status == 'processing' %}
+                                                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Processing</span>
+                                                    {% elif shipment.status == 'in_transit' %}
+                                                        <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">In Transit</span>
+                                                    {% elif shipment.status == 'out_for_delivery' %}
+                                                        <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">Out for Delivery</span>
+                                                    {% endif %}
+                                                    <span class="text-gray-500">#{{ shipment.tracking_number }}</span>
+                                                </div>
+                                                <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                                                    Package to {{ shipment.recipient_address.city }}, {{ shipment.recipient_address.state }}
+                                                </h3>
+                                                <div class="text-gray-500">
+                                                    <p>Estimated delivery: {{ shipment.estimated_delivery|date:"M d, Y" }}</p>
+                                                    <p>Shipping type: {{ shipment.get_shipping_speed_display }}</p>
+                                                </div>
+                                            </div>
+                                            <a href="{% url 'shipment_view' shipment.id %}" class="text-blue-600 hover:text-blue-700">View Details</a>
                                         </div>
-                                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Package to New York</h3>
-                                        <div class="text-gray-500">
-                                            <p>Estimated delivery: Feb 21, 2024</p>
-                                            <p>Current location: Chicago Distribution Center</p>
+                                        <div class="mt-4">
+                                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                                {% if shipment.status == 'pending' %}
+                                                    <div class="bg-blue-600 h-2 rounded-full" style="width: 25%"></div>
+                                                {% elif shipment.status == 'processing' %}
+                                                    <div class="bg-blue-600 h-2 rounded-full" style="width: 50%"></div>
+                                                {% elif shipment.status == 'in_transit' %}
+                                                    <div class="bg-blue-600 h-2 rounded-full" style="width: 75%"></div>
+                                                {% elif shipment.status == 'out_for_delivery' %}
+                                                    <div class="bg-blue-600 h-2 rounded-full" style="width: 90%"></div>
+                                                {% endif %}
+                                            </div>
                                         </div>
                                     </div>
-                                    <button class="text-blue-600 hover:text-blue-700">View Details</button>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center py-8">
+                                    <p class="text-gray-500">You don't have any active shipments.</p>
+                                    <a href="{% url 'ship' %}" class="mt-4 inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Create a New Shipment</a>
                                 </div>
-                                <div class="mt-4">
-                                    <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div class="bg-blue-600 h-2 rounded-full" style="width: 75%"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Shipment Card 2 -->
-                            <div class="border border-gray-200 rounded-lg p-6">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <div class="flex items-center space-x-3 mb-3">
-                                            <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">Out for Delivery</span>
-                                            <span class="text-gray-500">#AZ892346</span>
-                                        </div>
-                                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Package to Los Angeles</h3>
-                                        <div class="text-gray-500">
-                                            <p>Estimated delivery: Feb 19, 2024</p>
-                                            <p>Current location: Local Delivery Center</p>
-                                        </div>
-                                    </div>
-                                    <button class="text-blue-600 hover:text-blue-700">View Details</button>
-                                </div>
-                                <div class="mt-4">
-                                    <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div class="bg-blue-600 h-2 rounded-full" style="width: 90%"></div>
-                                    </div>
-                                </div>
-                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
-
+            
                 <!-- Recent Activity and Stats -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <!-- Recent Activity -->
@@ -190,30 +189,57 @@
                         </div>
                         <div class="p-6">
                             <div class="space-y-6">
-                                <div class="flex items-center">
-                                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-4">
-                                        <i class="fas fa-check text-green-600"></i>
+                                {% if recent_activity %}
+                                    {% for shipment in recent_activity %}
+                                        <div class="flex items-center">
+                                            {% if shipment.status == 'delivered' %}
+                                                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                                                    <i class="fas fa-check text-green-600"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="text-gray-900 font-medium">Package Delivered</p>
+                                                    <p class="text-gray-500 text-sm">Package #{{ shipment.tracking_number }} was delivered successfully</p>
+                                                    <p class="text-gray-400 text-sm">{{ shipment.updated_at|timesince }} ago</p>
+                                                </div>
+                                            {% elif shipment.status == 'in_transit' %}
+                                                <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-4">
+                                                    <i class="fas fa-truck text-yellow-600"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="text-gray-900 font-medium">Package In Transit</p>
+                                                    <p class="text-gray-500 text-sm">Shipment #{{ shipment.tracking_number }} is on its way</p>
+                                                    <p class="text-gray-400 text-sm">{{ shipment.updated_at|timesince }} ago</p>
+                                                </div>
+                                            {% elif shipment.status == 'cancelled' %}
+                                                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                                                    <i class="fas fa-times text-red-600"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="text-gray-900 font-medium">Shipment Cancelled</p>
+                                                    <p class="text-gray-500 text-sm">Shipment #{{ shipment.tracking_number }} was cancelled</p>
+                                                    <p class="text-gray-400 text-sm">{{ shipment.updated_at|timesince }} ago</p>
+                                                </div>
+                                            {% else %}
+                                                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                                                    <i class="fas fa-box text-blue-600"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="text-gray-900 font-medium">Status Updated: {{ shipment.get_status_display }}</p>
+                                                    <p class="text-gray-500 text-sm">Shipment #{{ shipment.tracking_number }} status updated</p>
+                                                    <p class="text-gray-400 text-sm">{{ shipment.updated_at|timesince }} ago</p>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-center py-4">
+                                        <p class="text-gray-500">No recent activity found.</p>
                                     </div>
-                                    <div>
-                                        <p class="text-gray-900 font-medium">Package Delivered</p>
-                                        <p class="text-gray-500 text-sm">Package #AZ892344 was delivered successfully</p>
-                                        <p class="text-gray-400 text-sm">2 hours ago</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center">
-                                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                                        <i class="fas fa-box text-blue-600"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-gray-900 font-medium">New Shipment Created</p>
-                                        <p class="text-gray-500 text-sm">You created a new shipment #AZ892346</p>
-                                        <p class="text-gray-400 text-sm">5 hours ago</p>
-                                    </div>
-                                </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
-
+            
                     <!-- Statistics -->
                     <div class="bg-white rounded-xl shadow-sm">
                         <div class="p-6 border-b border-gray-100">
@@ -223,22 +249,30 @@
                             <div class="grid grid-cols-2 gap-6">
                                 <div>
                                     <p class="text-gray-500 mb-1">Total Shipments</p>
-                                    <p class="text-2xl font-bold text-gray-900">24</p>
-                                    <p class="text-green-500 text-sm">+12% from last month</p>
+                                    <p class="text-2xl font-bold text-gray-900">{{ stats.total_shipments }}</p>
+                                    {% if stats.count_increased %}
+                                        <p class="text-green-500 text-sm">+{{ stats.count_change_pct }}% from last month</p>
+                                    {% else %}
+                                        <p class="text-red-500 text-sm">{{ stats.count_change_pct }}% from last month</p>
+                                    {% endif %}
                                 </div>
                                 <div>
                                     <p class="text-gray-500 mb-1">Delivered</p>
-                                    <p class="text-2xl font-bold text-gray-900">21</p>
-                                    <p class="text-green-500 text-sm">98% success rate</p>
+                                    <p class="text-2xl font-bold text-gray-900">{{ stats.delivered }}</p>
+                                    <p class="text-green-500 text-sm">{{ stats.success_rate }}% success rate</p>
                                 </div>
                                 <div>
                                     <p class="text-gray-500 mb-1">In Transit</p>
-                                    <p class="text-2xl font-bold text-gray-900">2</p>
+                                    <p class="text-2xl font-bold text-gray-900">{{ stats.in_transit }}</p>
                                 </div>
                                 <div>
                                     <p class="text-gray-500 mb-1">Total Spent</p>
-                                    <p class="text-2xl font-bold text-gray-900">$645</p>
-                                    <p class="text-green-500 text-sm">+5% from last month</p>
+                                    <p class="text-2xl font-bold text-gray-900">${{ stats.total_spent|floatformat:2 }}</p>
+                                    {% if stats.spent_increased %}
+                                        <p class="text-green-500 text-sm">+{{ stats.spent_change_pct }}% from last month</p>
+                                    {% else %}
+                                        <p class="text-red-500 text-sm">{{ stats.spent_change_pct }}% from last month</p>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>

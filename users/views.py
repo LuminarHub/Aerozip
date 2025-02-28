@@ -153,7 +153,7 @@ def add_address(request):
 
     return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
     
-        
+from django.db.models import Count, Sum
     
 
 @login_required
@@ -170,8 +170,90 @@ def shipment_detail(request, tracking_number):
     return render(request, 'shipment_detail.html', context)
 
 
-class UserHomeView(TemplateView):
+class UserHomeView(LoginRequiredMixin, TemplateView):
     template_name = "user_home.html"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        
+        # Get active shipments (not delivered or cancelled)
+        active_shipments = Shipment.objects.filter(
+            user=user,
+            status__in=['pending', 'processing', 'in_transit', 'out_for_delivery']
+        ).order_by('-created_at')[:3]  # Limit to 5 most recent
+        
+        # Get recent activity (all shipment status changes in last 7 days)
+        recent_date = timezone.now() - timedelta(days=7)
+        recent_activity = Shipment.objects.filter(
+            user=user,
+            updated_at__gte=recent_date
+        ).order_by('-updated_at')[:3]
+        
+        # Calculate monthly statistics
+        current_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        last_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
+        
+        # Current month stats
+        current_month_shipments = Shipment.objects.filter(
+            user=user,
+            created_at__gte=current_month_start
+        )
+        current_month_count = current_month_shipments.count()
+        current_month_delivered = current_month_shipments.filter(status='delivered').count()
+        current_month_in_transit = current_month_shipments.filter(
+            status__in=['in_transit', 'out_for_delivery']
+        ).count()
+        current_month_spent = current_month_shipments.aggregate(
+            total=Sum('shipping_cost')
+        )['total'] or 0
+        
+        # Last month stats for comparison
+        last_month_shipments = Shipment.objects.filter(
+            user=user,
+            created_at__gte=last_month_start,
+            created_at__lt=current_month_start
+        )
+        last_month_count = last_month_shipments.count()
+        last_month_spent = last_month_shipments.aggregate(
+            total=Sum('shipping_cost')
+        )['total'] or 0
+        
+        # Calculate percentage changes
+        if last_month_count > 0:
+            count_change_pct = ((current_month_count - last_month_count) / last_month_count) * 100
+        else:
+            count_change_pct = 100 if current_month_count > 0 else 0
+            
+        if last_month_spent > 0:
+            spent_change_pct = ((current_month_spent - last_month_spent) / last_month_spent) * 100
+        else:
+            spent_change_pct = 100 if current_month_spent > 0 else 0
+            
+        # Calculate delivery success rate
+        if current_month_count > 0:
+            success_rate = (current_month_delivered / current_month_count) * 100
+        else:
+            success_rate = 0
+        
+        # Build context with all data
+        context.update({
+            'active_shipments': active_shipments,
+            'recent_activity': recent_activity,
+            'stats': {
+                'total_shipments': current_month_count,
+                'delivered': current_month_delivered,
+                'in_transit': current_month_in_transit,
+                'total_spent': current_month_spent,
+                'count_change_pct': round(count_change_pct, 1),
+                'spent_change_pct': round(spent_change_pct, 1),
+                'success_rate': round(success_rate, 1),
+                'count_increased': count_change_pct >= 0,
+                'spent_increased': spent_change_pct >= 0,
+            }
+        })
+        
+        return context
 
 
 
