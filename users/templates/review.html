@@ -8,7 +8,7 @@
         <div class="flex items-center space-x-4">
             <h1 class="text-2xl font-bold text-gray-900">Reviews & Feedback</h1>
         </div>
-        <div class="flex items-center space-x-4">
+        {% comment %} <div class="flex items-center space-x-4">
             <div class="flex items-center space-x-3">
                 <img src="{% static 'images/profile.png' %}" alt="Profile" class="w-11 h-10 rounded-full">
                 <span class="text-gray-700">{{ request.user.name }}</span>
@@ -17,7 +17,7 @@
                 <i class="fas fa-sign-out-alt w-5"></i>
                 <span class="ml-3">Log Out</span>
             </a>
-        </div>
+        </div> {% endcomment %}
     </div>
 </header>
 
@@ -116,7 +116,7 @@
                                 <i class="fas fa-user text-blue-600"></i>
                             </div>
                             <div>
-                                <p class="font-medium">{{ review.user.get_full_name|default:review.user.username }}</p>
+                                <p class="font-medium">{{ review.user.get_full_name|default:review.user.name }}</p>
                                 <p class="text-gray-500 text-sm">{{ review.created_at|date:"F d, Y" }}</p>
                             </div>
                         </div>

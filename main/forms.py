@@ -6,6 +6,9 @@ class LogForm(forms.Form):
     email=forms.EmailField(widget=forms.EmailInput(attrs={"placeholder":"Email","class":"form-control","style":"border-radius: 0.75rem; "}))
     password=forms.CharField(widget=forms.PasswordInput(attrs={"placeholder":"Password","class":"form-control","style":"border-radius: 0.75rem; "}))
 
+class OTPVerificationForm(forms.Form):
+    otp = forms.CharField(max_length=6, widget=forms.TextInput(attrs={"placeholder":"Enter OTP", "class":"w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"}))
+
 
 class RegForm(forms.ModelForm):
     class Meta:

@@ -38,6 +38,7 @@ class CustomUser(AbstractBaseUser,PermissionsMixin):
     is_staff=models.BooleanField(default=False)
     is_superuser=models.BooleanField(default=False)
     is_company=models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
 
     objects = CustomUserManager()
 
@@ -61,6 +62,17 @@ class CustomUser(AbstractBaseUser,PermissionsMixin):
         return self.email
     
 
+class OTP(models.Model):
+    email = models.EmailField()
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def is_valid(self):
+        """Check if OTP is still valid (within 10 minutes)"""
+        import datetime
+        from django.utils import timezone
+        
+        return (timezone.now() - self.created_at) < datetime.timedelta(minutes=10)
     
 class Address(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)

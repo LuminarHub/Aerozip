@@ -127,3 +127,11 @@ AUTH_USER_MODEL = "main.CustomUser"
 
 RAZORPAY_KEY_ID = 'rzp_test_IzIBFTmzd3zzKk'  # Replace with your actual key ID
 RAZORPAY_KEY_SECRET = 'mMvIdZd7a4EU1pMd9tSQEbE0'
+
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # or your email provider
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'sumodkanthcs@gmail.com'
+EMAIL_HOST_PASSWORD = 'khqy sxno eswk dynu'
