@@ -123,6 +123,10 @@ class Shipment(models.Model):
     estimated_delivery = models.DateField(null=True, blank=True)
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     notes = models.TextField(blank=True)
+    cancellation_reason = models.CharField(max_length=255, blank=True, null=True)
+    cancellation_date = models.DateTimeField(blank=True, null=True)
+    cancellation_fee = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    is_paid = models.BooleanField(default=False)
 
     def generate_tracking_number(self):
         """Generate a unique tracking number (e.g., SHIP-ABC12345)"""
@@ -158,14 +162,32 @@ class Shipment(models.Model):
 
         return round(total_cost, 2)
 
+    def calculate_status(self):
+        """Determine shipment status based on estimated delivery and current date."""
+        if self.is_paid:
+            days_passed = (date.today() - self.created_at.date()).days
+
+            if days_passed < 1:
+                return 'pending'
+            elif days_passed < 2:
+                return 'processing'
+            elif days_passed < (self.estimated_delivery - timedelta(days=2)).day:
+                return 'in_transit'
+            elif days_passed < (self.estimated_delivery - timedelta(days=1)).day:
+                return 'out_for_delivery'
+            else:
+                return 'delivered'
+        return self.status  # Default if no estimated delivery set
+
     def save(self, *args, **kwargs):
-        """Override save() to assign tracking number, estimated delivery, and shipping cost before saving."""
         if not self.tracking_number:
             self.tracking_number = self.generate_tracking_number()
         if not self.estimated_delivery:
             self.estimated_delivery = self.calculate_estimated_delivery()
         if not self.shipping_cost:
             self.shipping_cost = self.calculate_shipping_cost()
+        
+        self.status = self.calculate_status()  # Automatically update status
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -203,3 +225,54 @@ class DomesticAirports(models.Model):
     
     def __str__(self):
         return self.name
+    
+    
+class TrackingSearchHistory(models.Model):
+    user=models.ForeignKey(CustomUser,on_delete=models.CASCADE,null=True)
+    shipment = models.OneToOneField(Shipment, on_delete=models.CASCADE, related_name='tracking_history')
+    timestamp = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.shipment.tracking_number}  at {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
+
+
+
+class Payment(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('refunded', 'Refunded'),
+    )
+    
+    shipment = models.ForeignKey('Shipment', on_delete=models.CASCADE, related_name='payments')
+    order_id = models.CharField(max_length=100, unique=True)
+    payment_id = models.CharField(max_length=100, blank=True, null=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Payment {self.order_id} for {self.shipment.tracking_number}"
+
+class Receipt(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    payment = models.OneToOneField(Payment, on_delete=models.CASCADE, related_name='receipt')
+    shipment = models.ForeignKey('Shipment', on_delete=models.CASCADE, related_name='receipts')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    transaction_id = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Receipt {self.id} for {self.shipment.tracking_number}"
+
+
+
+
+
+
+
+

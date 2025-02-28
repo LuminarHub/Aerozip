@@ -1,4 +1,4 @@
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect,get_object_or_404
 from django.views.generic import TemplateView
 # Create your views here.
 from django.contrib.auth.decorators import login_required
@@ -7,6 +7,18 @@ from main.models import *
 from main.forms import *
 import uuid
 from datetime import datetime, timedelta
+import json
+from django.http import JsonResponse,HttpResponse
+from django.contrib.auth.decorators import login_required
+from django.views.generic import ListView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Count
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import ProtectedError
+import razorpay
+from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 
 # shipment.tracking_number = f"AZ{uuid.uuid4().hex[:8].upper()}"
          
@@ -41,11 +53,7 @@ def create_shipment(request):
             recipient_address = Address.objects.get(id=request.POST.get("recipient_address"))
             shipment_type = request.POST.get("shipment_type")
             from_airport_code = request.POST.get("from_airport")
-            # from_airport_place = request.POST.get("from_airport_place")
-            # from_airport_code = request.POST.get("from_airport_code")
             to_airport_code = request.POST.get("to_airport")
-            # to_airport_place = request.POST.get("to_airport_place")
-            # to_airport_code = request.POST.get("to_airport_code")
             weight = float(request.POST.get("weight", 0))
             shipping_speed = request.POST.get("shipping_speed")
             notes = request.POST.get("notes")
@@ -81,15 +89,8 @@ def create_shipment(request):
                 shipping_speed=shipping_speed,
                 notes=notes
             )
-
-            # Print confirmation
-            print(f"Tracking Number: {shipment.tracking_number}")
-            print(f"Estimated Delivery Date: {shipment.estimated_delivery}")
-            print(f"Shipping Cost: ₹{shipment.shipping_cost}")
-
-            # Success message & redirect
             messages.success(request, 'Shipment created successfully!')
-            return redirect('my', tracking_number=shipment.tracking_number)
+            return redirect('my')
 
         except Address.DoesNotExist:
             messages.error(request, "Invalid address selection.")
@@ -97,8 +98,6 @@ def create_shipment(request):
             messages.error(request, "Invalid weight value.")
         except Exception as e:
             messages.error(request, f"Error: {str(e)}")
-
-    # Fetch data for the form
     international = InternationalAirports.objects.all()
     domestic = DomesticAirports.objects.all()
     addresses = Address.objects.filter(user=request.user)
@@ -110,9 +109,7 @@ def create_shipment(request):
     }
     return render(request, 'shipment.html', context)
 
-import json
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
+
 
 @login_required
 def add_address(request):
@@ -176,14 +173,103 @@ def shipment_detail(request, tracking_number):
 class UserHomeView(TemplateView):
     template_name = "user_home.html"
 
-from django.views.generic import ListView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count
-from django.utils import timezone
-from datetime import timedelta
+
 
 class MyShipmentView(LoginRequiredMixin, ListView):
     template_name = "myshipments.html"
+    context_object_name = "shipments"
+    paginate_by = 10
+    
+    def get_queryset(self):
+        # Get shipments for the logged-in user
+        queryset = Shipment.objects.filter(user=self.request.user).exclude(status='cancelled').order_by('-created_at')
+        
+        # Apply filters if provided
+        status_filter = self.request.GET.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+            
+        shipment_type = self.request.GET.get('type')
+        if shipment_type:
+            queryset = queryset.filter(shipment_type=shipment_type)
+            
+        date_range = self.request.GET.get('date_range')
+        if date_range:
+            today = timezone.now().date()
+            if date_range == '7':
+                date_from = today - timedelta(days=7)
+            elif date_range == '30':
+                date_from = today - timedelta(days=30)
+            elif date_range == '90':
+                date_from = today - timedelta(days=90)
+            else:
+                date_from = None
+                
+            if date_from:
+                queryset = queryset.filter(created_at__date__gte=date_from)
+                
+        # Handle search
+        search_query = self.request.GET.get('search')
+        if search_query:
+            queryset = queryset.filter(
+                tracking_number__icontains=search_query
+            ) | queryset.filter(
+                from_airport_place__icontains=search_query
+            ) | queryset.filter(
+                to_airport_place__icontains=search_query
+            ) | queryset.filter(
+                from_airport_name__icontains=search_query
+            ) | queryset.filter(
+                to_airport_name__icontains=search_query
+            ) | queryset.filter(
+                from_airport_code__icontains=search_query
+            ) | queryset.filter(
+                to_airport_code__icontains=search_query
+            )
+            
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Add counts for dashboard stats
+        user_shipments = Shipment.objects.filter(user=self.request.user).exclude(status="cancelled")
+        
+        # Get status counts
+        status_counts = user_shipments.values('status').annotate(count=Count('status'))
+        
+        # Initialize counters
+        total_count = user_shipments.count()
+        pending_count = 0
+        in_transit_count = 0
+        delivered_count = 0
+        
+        # Fill counts from query results
+        for status in status_counts:
+            if status['status'] in ['pending', 'processing']:
+                pending_count += status['count']
+            elif status['status'] in ['in_transit', 'out_for_delivery']:
+                in_transit_count += status['count']
+            elif status['status'] == 'delivered':
+                delivered_count += status['count']
+        
+        # Add to context
+        context['total_count'] = total_count
+        context['pending_count'] = pending_count
+        context['in_transit_count'] = in_transit_count
+        context['delivered_count'] = delivered_count
+        
+        # Add filter values to maintain state
+        context['current_status'] = self.request.GET.get('status', '')
+        context['current_type'] = self.request.GET.get('type', '')
+        context['current_date_range'] = self.request.GET.get('date_range', '7')
+        context['search_query'] = self.request.GET.get('search', '')
+        
+        return context
+
+
+class ShipmentHistoryView(LoginRequiredMixin, ListView):
+    template_name = "history.html"
     context_object_name = "shipments"
     paginate_by = 10
     
@@ -274,13 +360,462 @@ class MyShipmentView(LoginRequiredMixin, ListView):
         
         return context
 
+
+
 class TrackView(TemplateView):
     template_name = "tracking.html"
 
-class ViewShipment(TemplateView):
-    template_name = "view_shipment.html"
-    def get_context_data(self, **kwargs):
-        id=kwargs.get('pk')
-        context = super().get_context_data(**kwargs)
-        context['shipment']=Shipment.objects.get(id=id)
-        return context
+def shipment_details(request, pk):
+    shipment = get_object_or_404(Shipment, id=pk, user=request.user)
+    payment_exists = Payment.objects.filter(shipment=shipment, status='completed').exists()
+    
+    context = {
+        'shipment': shipment,
+        'payment_exists': payment_exists
+    }
+    
+    return render(request, 'view_shipment.html', context)
+    
+    
+def edit_shipment(request, tracking_number):
+    # Fetch the shipment based on tracking number
+    shipment = get_object_or_404(Shipment, tracking_number=tracking_number)
+
+    # Fetch addresses and airports for the dropdown
+    addresses = Address.objects.all()
+    domestic_airports = DomesticAirports.objects.all()  # Adjust according to your model
+    international_airports = InternationalAirports.objects.all()  # Adjust according to your model
+
+    # If the form is submitted (POST request)
+    if request.method == 'POST':
+        # Handle the form submission and validate
+        sender_address = request.POST.get('sender_address')
+        recipient_address = request.POST.get('recipient_address')
+        shipment_type = request.POST.get('shipment_type')
+        weight = request.POST.get('weight')
+        shipping_speed = request.POST.get('shipping_speed')
+        notes = request.POST.get('notes')
+
+        # Domestic or International airport data
+        if shipment_type == 'domestic':
+            from_airport = request.POST.get('from_airport_domestic')
+            to_airport = request.POST.get('to_airport_domestic')
+        else:
+            from_airport = request.POST.get('from_airport_international')
+            to_airport = request.POST.get('to_airport_international')
+
+        # Update the shipment instance with the new data
+        shipment.sender_address = get_object_or_404(Address, id=sender_address)
+        shipment.recipient_address = get_object_or_404(Address, id=recipient_address)
+        shipment.shipment_type = shipment_type
+        shipment.weight = weight
+        shipment.shipping_speed = shipping_speed
+        shipment.notes = notes
+        shipment.from_airport_code = from_airport
+        shipment.to_airport_code = to_airport
+
+        # Save the updated shipment data
+        shipment.save()
+
+        # Add a success message and redirect to shipment detail page
+        messages.success(request, 'Shipment updated successfully!')
+        return redirect('shipment_view', shipment.id)
+
+    # If it's a GET request, render the form with the current shipment data
+    return render(request, 'edit_shipment.html', {
+        'shipment': shipment,
+        'addresses': addresses,
+        'domestic': domestic_airports,
+        'international': international_airports,
+    })
+    
+    
+def track_shipment(request):
+    tracking_number = request.GET.get('tracking_number', '').strip()
+    history = TrackingSearchHistory.objects.filter(user=request.user)
+    if tracking_number:
+        try:
+            shipment = Shipment.objects.get(tracking_number=tracking_number)
+            if shipment.status == 'cancelled':
+                messages.error(request, "Please enter a valid tracking number.")
+                return redirect('track')
+            TrackingSearchHistory.objects.get_or_create(user=request.user,shipment=shipment)
+            tracking_updates = ShipmentTrackingUpdate.objects.filter(shipment=shipment).all()
+            context = {
+                'shipment': shipment,
+                'tracking_updates': tracking_updates,
+                'tracking_number': tracking_number
+            }
+            return render(request, 'tracking.html', context)
+        except Shipment.DoesNotExist:
+            messages.error(request, "Please enter a valid tracking number.")
+            return render(request, 'tracking.html', {'history':history})
+    else:
+        messages.error(request, "Please enter a valid tracking number.")
+        return render(request, 'tracking.html', {'history':history})
+    
+
+def track_shipment_my(request,tracking_number):
+    if tracking_number:
+        try:
+            shipment = Shipment.objects.get(tracking_number=tracking_number)
+            if shipment.status == 'cancelled':
+                messages.error(request, "Please enter a valid tracking number.")
+                return redirect('track')
+            TrackingSearchHistory.objects.get_or_create(user=request.user,shipment=shipment)
+            tracking_updates = ShipmentTrackingUpdate.objects.filter(shipment=shipment).all()
+            context = {
+                'shipment': shipment,
+                'tracking_updates': tracking_updates,
+                'tracking_number': tracking_number
+            }
+            return render(request, 'tracking.html', context)
+        except Shipment.DoesNotExist:
+            messages.error(request, "Please enter a valid tracking number.")
+            return render(request, 'tracking.html', {})
+    else:
+        messages.error(request, "Please enter a valid tracking number.")
+        return render(request, 'tracking.html', {})
+    
+
+@login_required
+def address_book(request):
+    """View to display all addresses for the current user"""
+    addresses = Address.objects.filter(user=request.user)
+    default_address = addresses.filter(is_default=True).first()
+    
+    context = {
+        'addresses': addresses,
+        'default_address': default_address,
+    }
+    return render(request, 'address.html', context)
+
+@login_required
+def add_address(request):
+    """View to add a new address"""
+    if request.method == 'POST':
+        form = AddressForm(request.POST)
+        if form.is_valid():
+            address = form.save(commit=False)
+            address.user = request.user
+            
+            # If this is set as default, unset any existing default
+            if address.is_default:
+                Address.objects.filter(user=request.user, is_default=True).update(is_default=False)
+                
+            address.save()
+            return redirect('add')
+    else:
+        form = AddressForm()
+    
+    return render(request, 'add_form.html', {'form': form, 'title': 'Add New Address'})
+
+@login_required
+def edit_address(request, address_id):
+    """View to edit an existing address"""
+    address = get_object_or_404(Address, id=address_id, user=request.user)
+    
+    if request.method == 'POST':
+        form = AddressForm(request.POST, instance=address)
+        if form.is_valid():
+            # If this is set as default, unset any existing default
+            if form.cleaned_data.get('is_default'):
+                Address.objects.filter(user=request.user, is_default=True).update(is_default=False)
+                
+            form.save()
+            return redirect('add')
+    else:
+        form = AddressForm(instance=address)
+    
+    return render(request, 'add_form.html', {
+        'form': form, 
+        'title': 'Edit Address',
+        'address': address
+    })
+
+
+
+
+@login_required
+def delete_address(request, address_id):
+    """View to delete an address, handling ProtectedError"""
+    address = get_object_or_404(Address, id=address_id, user=request.user)
+
+    try:
+        address.delete()
+        messages.success(request, "Address deleted successfully.")
+    except ProtectedError:
+        messages.error(request, "Cannot delete this address because it is linked to an active shipment.")
+
+    return redirect('add')
+
+@login_required
+def set_default_address(request, address_id):
+    """View to set an address as default"""
+    if request.method == 'POST':
+        # First, unset any existing default address
+        Address.objects.filter(user=request.user, is_default=True).update(is_default=False)
+        
+        # Set the selected address as default
+        address = get_object_or_404(Address, id=address_id, user=request.user)
+        address.is_default = True
+        address.save()
+        
+    return redirect('add')
+from django.urls import reverse
+
+
+client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+@login_required
+def payment_page(request, tracking_number):
+    shipment = get_object_or_404(Shipment, tracking_number=tracking_number, user=request.user)
+    
+    # Check if already paid
+    if Payment.objects.filter(shipment=shipment, status='completed').exists():
+        return redirect('view_receipt', tracking_number=tracking_number)
+    
+    # Calculate amount (in paise - Razorpay uses smallest currency unit)
+    amount = int(float(shipment.shipping_cost) * 100)
+    
+    # Create Razorpay order
+    order_data = {
+        'amount': amount,
+        'currency': 'INR',
+        'receipt': f'receipt_{tracking_number}',
+        'notes': {
+            'Shipping_ID': tracking_number,
+            'Customer': request.user.email
+        }
+    }
+    
+    # Create Razorpay Order
+    order = client.order.create(data=order_data)
+    
+    # Save to database
+    payment, created = Payment.objects.get_or_create(
+        shipment=shipment,
+        defaults={
+            'amount': float(shipment.shipping_cost),
+            'order_id': order['id'],
+            'status': 'pending'
+        }
+    )
+    
+    # If not created, update the order ID
+    if not created:
+        payment.order_id = order['id']
+        payment.status = 'pending'
+        payment.save()
+    
+    context = {
+        'shipment': shipment,
+        'order_id': order['id'],
+        'razorpay_key_id': settings.RAZORPAY_KEY_ID,
+        'amount': amount,
+        'currency': 'INR',
+        'callback_url': request.build_absolute_uri(reverse('payment_callback')),
+        'user_email': request.user.email,
+        'user_name': f"{request.user.name} ",
+        'user_phone': request.user.phone if hasattr(request.user, 'profile') else ''
+    }
+    
+    return render(request, 'payment_page.html', context)
+
+@csrf_exempt
+def payment_callback(request):
+    if request.method == "POST":
+        payment_id = request.POST.get('razorpay_payment_id', '')
+        order_id = request.POST.get('razorpay_order_id', '')
+        signature = request.POST.get('razorpay_signature', '')
+        
+        # Verify signature
+        params_dict = {
+            'razorpay_payment_id': payment_id,
+            'razorpay_order_id': order_id,
+            'razorpay_signature': signature
+        }
+        
+        try:
+            client.utility.verify_payment_signature(params_dict)
+            
+            # Update payment status
+            payment = Payment.objects.get(order_id=order_id)
+            payment.payment_id = payment_id
+            payment.status = 'completed'
+            payment.save()
+            
+            # Create receipt
+            shipment = payment.shipment
+            ship = Shipment.objects.get(id=shipment)
+            ship.is_paid = True
+            ship.save()
+            receipt = Receipt.objects.create(
+                payment=payment,
+                shipment=shipment,
+                amount=payment.amount,
+                transaction_id=payment_id
+            )
+            
+            # Redirect to receipt page
+            return redirect('view_receipt', tracking_number=shipment.tracking_number)
+        except:
+            # Failed verification
+            return redirect('payment_failed', tracking_number=payment.shipment.tracking_number)
+    
+    return HttpResponse("Invalid request", status=400)
+
+@login_required
+def payment_failed(request, tracking_number):
+    shipment = get_object_or_404(Shipment, tracking_number=tracking_number, user=request.user)
+    return render(request, 'payment_failed.html', {'shipment': shipment})
+
+@login_required
+def view_receipt(request, tracking_number):
+    shipment = get_object_or_404(Shipment, tracking_number=tracking_number, user=request.user)
+    
+    try:
+        payment = Payment.objects.get(shipment=shipment, status='completed')
+        receipt = Receipt.objects.get(payment=payment)
+    except (Payment.DoesNotExist, Receipt.DoesNotExist):
+        return redirect('payment_page', tracking_number=tracking_number)
+    
+    context = {
+        'shipment': shipment,
+        'payment': payment,
+        'receipt': receipt
+    }
+    
+    return render(request, 'receipt.html', context)
+
+@login_required
+def download_receipt(request, tracking_number):
+    shipment = get_object_or_404(Shipment, tracking_number=tracking_number, user=request.user)
+    
+    try:
+        payment = Payment.objects.get(shipment=shipment, status='completed')
+        receipt = Receipt.objects.get(payment=payment)
+    except (Payment.DoesNotExist, Receipt.DoesNotExist):
+        return redirect('payment_page', tracking_number=tracking_number)
+    
+    # Generate PDF receipt here (using a library like ReportLab or WeasyPrint)
+    # For this example, we'll just return a rendered HTML template
+    context = {
+        'shipment': shipment,
+        'payment': payment,
+        'receipt': receipt,
+        'for_pdf': True
+    }
+    
+    return render(request, 'receipt_pdf.html', context)
+
+
+@login_required
+def cancel_shipment(request, tracking_number):
+    """View to handle shipment cancellation."""
+    shipment = get_object_or_404(Shipment, tracking_number=tracking_number, user=request.user)
+    
+    # Check if shipment is already canceled or delivered
+    if shipment.status == 'cancelled':
+        messages.error(request, "This shipment has already been cancelled.")
+        return redirect('shipment_detail', tracking_number=tracking_number)
+    
+    if shipment.status == 'delivered':
+        messages.error(request, "Cannot cancel a shipment that has already been delivered.")
+        return redirect('shipment_detail', tracking_number=tracking_number)
+    
+    # Display the cancellation form
+    if request.method == 'GET':
+        return render(request, 'cancel_shipment.html', {
+            'shipment': shipment
+        })
+    
+    # Process the cancellation
+    elif request.method == 'POST':
+        cancel_reason = request.POST.get('cancel_reason')
+        other_reason = request.POST.get('other_reason', '')
+        
+        # Store the cancellation reason
+        if cancel_reason == 'other' and other_reason:
+            reason_text = other_reason
+        else:
+            # Map the reason codes to human-readable text
+            reason_mapping = {
+                'mistake': 'Created by mistake',
+                'other_service': 'Using different shipping service',
+                'delayed': 'Shipment delayed too long',
+                'changed_mind': 'Changed my mind',
+                'address_error': 'Address error',
+                'other': 'Other reason'
+            }
+            reason_text = reason_mapping.get(cancel_reason, 'Unspecified reason')
+        
+        # Record cancellation fee if applicable
+        cancellation_fee = 0
+        if shipment.status in ['in_transit', 'out_for_delivery']:
+            # Apply a cancellation fee for shipments already in transit
+            # Calculate based on shipping cost and status
+            if shipment.status == 'in_transit':
+                cancellation_fee = shipment.shipping_cost * 0.5  # 50% fee
+            else:  # out_for_delivery
+                cancellation_fee = shipment.shipping_cost * 0.75  # 75% fee
+        
+        # Update shipment status
+        shipment.status = 'cancelled'
+        shipment.cancellation_reason = reason_text
+        shipment.cancellation_date = timezone.now()
+        shipment.cancellation_fee = cancellation_fee
+        shipment.save()
+        
+        # Send notification (can be implemented as needed)
+        # notify_shipment_cancelled(shipment)
+        
+        messages.success(request, f"Shipment {tracking_number} has been successfully cancelled.")
+        return redirect('shipment_list')
+    
+    
+@login_required
+def delete_shipment(request, tracking_number):
+    """Process shipment cancellation and redirect to appropriate page."""
+    shipment = get_object_or_404(Shipment, tracking_number=tracking_number, user=request.user)
+    
+    # Check if shipment can be deleted (only pending or cancelled shipments)
+    if shipment.status not in ['pending', 'cancelled']:
+        messages.error(request, "Only pending or cancelled shipments can be deleted.")
+        return redirect('shipment_detail', tracking_number=tracking_number)
+    
+    if request.method == 'POST':
+        cancel_reason = request.POST.get('cancel_reason')
+        other_reason = request.POST.get('other_reason', '')
+        
+        # Store cancellation reason before deletion if needed for records
+        if cancel_reason == 'other' and other_reason:
+            reason_text = other_reason
+        else:
+            reason_mapping = {
+                'mistake': 'Created by mistake',
+                'other_service': 'Using different shipping service',
+                'delayed': 'Shipment delayed too long',
+                'changed_mind': 'Changed my mind',
+                'address_error': 'Address error',
+                'other': 'Other reason'
+            }
+            reason_text = reason_mapping.get(cancel_reason, 'Unspecified reason')
+        
+        # You could log the deletion in a separate model if needed
+        # ShipmentLog.objects.create(
+        #     tracking_number=shipment.tracking_number,
+        #     user=request.user,
+        #     action="deletion",
+        #     reason=reason_text
+        # )
+        
+        # Delete the shipment
+        shipment.status="cancelled"
+        shipment.save()
+        
+        messages.success(request, f"Shipment {tracking_number} has been successfully deleted.")
+        return redirect('my')
+    
+    # If not POST, redirect to the cancel page
+    return redirect('cancel_shipment', tracking_number=tracking_number)

@@ -1,0 +1,132 @@
+{% extends 'user_home.html' %}
+{% block content %}
+        <!-- Main Content -->
+        <main class="flex-1 ml-2">
+            <!-- Top Bar -->
+            <header class="bg-white shadow-sm">
+                <div class="flex items-center justify-between px-8 py-4">
+                    <div class="flex items-center space-x-4">
+                        <h1 class="text-2xl font-bold text-gray-900">Address Book</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="relative">
+                            <i class="fas fa-bell text-gray-600 text-xl"></i>
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
+                        </button>
+                        <div class="flex items-center space-x-3">
+                            <img src="/api/placeholder/32/32" alt="Profile" class="w-8 h-8 rounded-full">
+                            <span class="text-gray-700">{{request.user.name}}</span>
+                        </div>
+                        <a href="{% url 'logout' %}" class="flex items-center px-4 py-3 text-red-600 hover:bg-gray-50 rounded-lg">
+                            <i class="fas fa-sign-out-alt w-5"></i>
+                            <span class="ml-3">Log Out</span>
+                        </a>
+                    </div>
+                </div>
+            </header>
+            {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+            <!-- Address Book Content -->
+            <div class="p-8">
+                <!-- Quick Actions -->
+                <div class="flex justify-between items-center mb-8">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" id="searchInput" class="bg-white h-10 pl-10 pr-4 rounded-lg text-sm focus:outline-none border border-gray-300" placeholder="Search addresses...">
+                    </div>
+                    
+                    <a href="{% url 'add_address' %}" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                        <i class="fas fa-plus mr-2"></i>
+                        Add New Address
+                    </a>
+                </div>
+
+                <!-- Address Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for address in addresses %}
+                    <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 relative">
+                        {% if address.is_default %}
+                        <span class="absolute top-2 right-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                            Default
+                        </span>
+                        {% endif %}
+                        
+                        <div class="mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">{{ address.name }}</h3>
+                        </div>
+                        
+                        <div class="text-gray-600 space-y-1 mb-6">
+                            <p>{{ address.street_address }}</p>
+                            <p>{{ address.city }}, {{ address.state }} {{ address.postal_code }}</p>
+                            <p>{{ address.country }}</p>
+                            <p class="mt-2"><i class="fas fa-phone-alt mr-2 text-gray-400"></i>{{ address.phone }}</p>
+                        </div>
+                        
+                        <div class="flex justify-between border-t pt-4">
+                            <div class="space-x-2">
+                                <a href="{% url 'edit_address' address.id %}" class="text-blue-600 hover:text-blue-800 transition-colors">
+                                    <i class="fas fa-edit mr-1"></i> Edit
+                                </a>
+                                <a href="{% url 'delete_address' address.id %}" class="text-red-600 hover:text-red-800 transition-colors">
+                                    <i class="fas fa-trash-alt mr-1"></i> Delete
+                                </a>
+                            </div>
+                            
+                            {% if not address.is_default %}
+                            <form method="post" action="{% url 'set_default_address' address.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="text-gray-600 hover:text-gray-800 transition-colors">
+                                    <i class="far fa-star mr-1"></i> Set as Default
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-span-full bg-white rounded-xl shadow-sm p-8 text-center">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full mx-auto flex items-center justify-center mb-4">
+                            <i class="fas fa-address-book text-gray-400 text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No addresses found</h3>
+                        <p class="text-gray-500 mb-6">Add your first shipping address to get started.</p>
+                        <a href="{% url 'add_address' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i> Add New Address
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Search functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            
+            searchInput.addEventListener('input', function() {
+                const searchText = this.value.toLowerCase();
+                const addressCards = document.querySelectorAll('.grid > div:not(.col-span-full)');
+                
+                addressCards.forEach(card => {
+                    const cardText = card.textContent.toLowerCase();
+                    if (cardText.includes(searchText)) {
+                        card.style.display = '';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

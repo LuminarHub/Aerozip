@@ -11,6 +11,11 @@ class RegForm(forms.ModelForm):
     class Meta:
         model = CustomUser
         fields = '__all__'
+
+class AddressForm(forms.ModelForm):
+    class Meta:
+        model = Address
+        exclude = ['user']
         
         
 
@@ -21,8 +26,8 @@ class RegForm(forms.ModelForm):
 #         model = Shipment
 #         fields = ['user','shipment_type','from_airport','to_airport','sender_address','recipient_address', 'shipping_speed', 'notes','weight']
     
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        super().__init__(*args, **kwargs)
-        if user:
-            self.fields['recipient_address'].queryset = Address.objects.filter(user=user)
+    # def __init__(self, *args, **kwargs):
+    #     user = kwargs.pop('user', None)
+    #     super().__init__(*args, **kwargs)
+    #     if user:
+    #         self.fields['recipient_address'].queryset = Address.objects.filter(user=user)

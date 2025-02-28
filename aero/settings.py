@@ -123,3 +123,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 AUTH_USER_MODEL = "main.CustomUser"
+
+
+RAZORPAY_KEY_ID = 'rzp_test_IzIBFTmzd3zzKk'  # Replace with your actual key ID
+RAZORPAY_KEY_SECRET = 'mMvIdZd7a4EU1pMd9tSQEbE0'

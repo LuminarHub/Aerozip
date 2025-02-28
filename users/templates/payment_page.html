@@ -1,0 +1,109 @@
+<!-- payment_page.html -->
+{% extends 'user_home.html' %}
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-12">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center mb-6">
+                <a href="{% url 'shipment_view' shipment.id %}" class="mr-4 text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h1 class="text-2xl font-bold text-gray-900">Payment for Shipment</h1>
+            </div>
+            
+            <div class="border-t border-gray-200 py-4">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Shipment Details</h2>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <p class="text-sm text-gray-500">Tracking Number</p>
+                        <p class="text-sm font-medium">{{ shipment.tracking_number }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Shipping Method</p>
+                        <p class="text-sm font-medium">{{ shipment.get_shipping_speed_display }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">From</p>
+                        <p class="text-sm font-medium">{{ shipment.sender_address.city }}, {{ shipment.sender_address.country }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">To</p>
+                        <p class="text-sm font-medium">{{ shipment.recipient_address.city }}, {{ shipment.recipient_address.country }}</p>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <div class="flex justify-between items-center">
+                        <span class="text-lg font-medium">Total Amount</span>
+                        <span class="text-2xl font-bold text-blue-600">₹{{ shipment.shipping_cost }}</span>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <button id="rzp-button" class="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Pay Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.getElementById('rzp-button').onclick = function(e){
+    var options = {
+        "key": "{{ razorpay_key_id }}",
+        "amount": "{{ amount }}",
+        "currency": "{{ currency }}",
+        "name": "ShipEasy",
+        "description": "Payment for Shipment #{{ shipment.tracking_number }}",
+        "order_id": "{{ order_id }}",
+        "handler": function (response){
+            // Create a form for submission
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "{{ callback_url }}";
+            
+            // Add CSRF token
+            var csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = '{{ csrf_token }}';
+            form.appendChild(csrfInput);
+            
+            // Add response fields
+            for (var key in response) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = response[key];
+                form.appendChild(input);
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
+        },
+        "prefill": {
+            "name": "{{ user_name }}",
+            "email": "{{ user_email }}",
+            "contact": "{{ user_phone }}"
+        },
+        "theme": {
+            "color": "#3b82f6"
+        }
+    };
+    var rzp1 = new Razorpay(options);
+    rzp1.open();
+    e.preventDefault();
+}
+</script>
+{% endblock %}
+
+<!-- receipt.html -->
+
+
+<!-- receipt_pdf.html (for downloading as PDF) -->
+
+
+<!-- payment_failed.html -->

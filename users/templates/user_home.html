@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+    {% load static %}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,7 +21,7 @@
             
             <nav class="px-4 py-4">
                 <div class="space-y-2">
-                    <a href="#" class="flex items-center px-4 py-3 text-blue-600 bg-blue-50 rounded-lg">
+                    <a href="{% url 'uh' %}" class="flex items-center px-4 py-3 text-blue-600 bg-blue-50 rounded-lg">
                         <i class="fas fa-home w-5"></i>
                         <span class="ml-3">Dashboard</span>
                     </a>
@@ -32,22 +33,26 @@
                         <i class="fas fa-plus-circle w-5"></i>
                         <span class="ml-3">New Shipment</span>
                     </a>
-                    <a href="#" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+                    <a href="{% url 'track' %}" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+                        <i class="fas fa-map-marker-alt w-5"></i>
+                        <span class="ml-3">Track Shipment</span>
+                    </a>
+                    <a href="{% url 'add' %}" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
                         <i class="fas fa-address-book w-5"></i>
                         <span class="ml-3">Address Book</span>
                     </a>
-                    <a href="#" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+                    <a href="{% url 'history' %}" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
                         <i class="fas fa-history w-5"></i>
                         <span class="ml-3">History</span>
-                    </a>
+                    </a> 
                     <a href="#" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
                         <i class="fas fa-star w-5"></i>
                         <span class="ml-3">Reviews</span>
                     </a>
-                    <a href="#" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
+                    {% comment %} <a href="#" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg">
                         <i class="fas fa-cog w-5"></i>
                         <span class="ml-3">Settings</span>
-                    </a>
+                    </a> {% endcomment %}
                 </div>
             </nav>
         </aside>
@@ -62,12 +67,12 @@
                         <h1 class="text-2xl font-bold text-gray-900">Welcome back, John!</h1>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <button class="relative">
+                        {% comment %} <button class="relative">
                             <i class="fas fa-bell text-gray-600 text-xl"></i>
                             <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
-                        </button>
+                        </button> {% endcomment %}
                         <div class="flex items-center space-x-3">
-                            <img src="/api/placeholder/32/32" alt="Profile" class="w-8 h-8 rounded-full">
+                            <img src="{% static 'images/profile.png' %}" alt="Profile" class="w-11 h-10 rounded-full">
                             <span class="text-gray-700">{{request.user.name}}</span>
                         </div>
                         <a href="{% url 'logout' %}" class="flex items-center px-4 py-3 text-red-600 hover:bg-gray-50 rounded-lg">

@@ -1,0 +1,139 @@
+{% extends 'user_home.html' %}
+{% block content %}
+        <!-- Main Content -->
+        <main class="flex-1 ml-2">
+        
+            
+            <!-- Form Content -->
+            <div class="p-8">
+                <div class="bg-white rounded-xl shadow-sm p-6 max-w-2xl mx-auto">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{form.errors}}
+                        {% if form.non_field_errors %}
+                        <div class="mb-4 p-4 bg-red-50 text-red-700 rounded-lg">
+                            {% for error in form.non_field_errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <!-- Name Field -->
+                            <div class="col-span-2">
+                                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Name
+                                </label>
+                                <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}" 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" 
+                                    value="{{ form.name.value|default:'' }}" required>
+                                {% if form.name.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Street Address Field -->
+                            <div class="col-span-2">
+                                <label for="{{ form.street_address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Street Address
+                                </label>
+                                <input type="text" name="{{ form.street_address.name }}" id="{{ form.street_address.id_for_label }}" 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" 
+                                    value="{{ form.street_address.value|default:'' }}" required>
+                                {% if form.street_address.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.street_address.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- City Field -->
+                            <div>
+                                <label for="{{ form.city.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                    City
+                                </label>
+                                <input type="text" name="{{ form.city.name }}" id="{{ form.city.id_for_label }}" 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" 
+                                    value="{{ form.city.value|default:'' }}" required>
+                                {% if form.city.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.city.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- State Field -->
+                            <div>
+                                <label for="{{ form.state.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                    State/Province
+                                </label>
+                                <input type="text" name="{{ form.state.name }}" id="{{ form.state.id_for_label }}" 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" 
+                                    value="{{ form.state.value|default:'' }}" required>
+                                {% if form.state.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.state.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Country Field -->
+                            <div>
+                                <label for="{{ form.country.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Country
+                                </label>
+                                <input type="text" name="{{ form.country.name }}" id="{{ form.country.id_for_label }}" 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" 
+                                    value="{{ form.country.value|default:'' }}" required>
+                                {% if form.country.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.country.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Postal Code Field -->
+                            <div>
+                                <label for="{{ form.postal_code.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Postal Code
+                                </label>
+                                <input type="text" name="{{ form.postal_code.name }}" id="{{ form.postal_code.id_for_label }}" 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" 
+                                    value="{{ form.postal_code.value|default:'' }}" required>
+                                {% if form.postal_code.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.postal_code.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Phone Field -->
+                            <div class="col-span-2">
+                                <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Phone Number
+                                </label>
+                                <input type="tel" name="{{ form.phone.name }}" id="{{ form.phone.id_for_label }}" 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" 
+                                    value="{{ form.phone.value|default:'' }}" required>
+                                {% if form.phone.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.phone.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Default Address Checkbox -->
+                            <div class="col-span-2">
+                                <div class="flex items-center">
+                                    <input type="checkbox" name="{{ form.is_default.name }}" id="{{ form.is_default.id_for_label }}" 
+                                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                        {% if form.is_default.value %}checked{% endif %}>
+                                    <label for="{{ form.is_default.id_for_label }}" class="ml-2 block text-sm text-gray-700">
+                                        Set as default address
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between pt-4 border-t">
+                            <a href="{% url 'add' %}" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                                Cancel
+                            </a>
+                            <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                Save Address
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+{% endblock %}

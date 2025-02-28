@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Receipt {{ receipt.id }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .receipt-container {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid #ddd;
+            padding: 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .company-info {
+            margin-bottom: 20px;
+        }
+        .paid-badge {
+            display: inline-block;
+            background-color: #d1fae5;
+            color: #065f46;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background-color: #f9fafb;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #6b7280;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #f9fafb;
+        }
+        .amount {
+            text-align: right;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #6b7280;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <div class="header">
+            <div class="company-info">
+                <h2>ShipEasy</h2>
+                <p>123 Shipping Lane<br>
+                Logistics City, LS 12345<br>
+                support@shipeasy.com</p>
+            </div>
+            <div>
+                <div class="paid-badge">Paid</div>
+                <p>Receipt ID: {{ receipt.id|truncatechars:8 }}<br>
+                Date: {{ receipt.created_at|date:"M d, Y" }}</p>
+            </div>
+        </div>
+        
+        <h3>Shipment Details</h3>
+        <table>
+            <tr>
+                <td>Tracking Number:</td>
+                <td>{{ shipment.tracking_number }}</td>
+                <td>Shipping Method:</td>
+                <td>{{ shipment.get_shipping_speed_display }}</td>
+            </tr>
+            <tr>
+                <td>From:</td>
+                <td>{{ shipment.sender_address.city }}, {{ shipment.sender_address.country }}</td>
+                <td>To:</td>
+                <td>{{ shipment.recipient_address.city }}, {{ shipment.recipient_address.country }}</td>
+            </tr>
+        </table>
+        
+        <h3>Payment Information</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th class="amount">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Shipping Charges for {{ shipment.get_shipping_speed_display }}</td>
+                    <td class="amount">₹{{ payment.amount }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td>Total</td>
+                    <td class="amount">₹{{ payment.amount }}</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="footer">
+            <p><strong>Transaction ID:</strong> {{ receipt.transaction_id }}<br>
+            <strong>Payment Method:</strong> Razorpay</p>
+            <p>Thank you for your business!</p>
+        </div>
+    </div>
+</body>
+</html>

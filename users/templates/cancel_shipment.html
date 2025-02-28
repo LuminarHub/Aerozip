@@ -1,0 +1,120 @@
+{% extends 'user_home.html' %}
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Back Button and Header -->
+        <div class="mb-6">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center">
+                    <a href="{% url 'shipment_view' shipment.id %}" class="mr-4 text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Cancel Shipment</h1>
+                        <p class="mt-1 text-sm text-gray-500">Tracking Number: {{ shipment.tracking_number }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="sm:flex sm:items-start">
+                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                </div>
+                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Cancel Shipment</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500">
+                            Are you sure you want to cancel this shipment? This action cannot be undone.
+                            {% if shipment.status == 'in_transit' or shipment.status == 'out_for_delivery' %}
+                            <strong class="text-red-600">Warning: This shipment is already {{ shipment.get_status_display }}. Cancellation may incur fees.</strong>
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div class="mt-4 p-4 bg-gray-50 rounded-md">
+                        <h4 class="font-medium text-gray-700 mb-2">Shipment Information</h4>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                                <span class="text-gray-500">Tracking Number:</span>
+                                <span class="font-medium ml-1">{{ shipment.tracking_number }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Status:</span>
+                                <span class="font-medium ml-1">{{ shipment.get_status_display }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Created:</span>
+                                <span class="font-medium ml-1">{{ shipment.created_at|date:"M d, Y" }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Type:</span>
+                                <span class="font-medium ml-1">{{ shipment.get_shipment_type_display }}</span>
+                            </div>
+                            <div class="col-span-2">
+                                <span class="text-gray-500">From:</span>
+                                <span class="font-medium ml-1">{{ shipment.sender_address.city }}, {{ shipment.sender_address.state }}</span>
+                            </div>
+                            <div class="col-span-2">
+                                <span class="text-gray-500">To:</span>
+                                <span class="font-medium ml-1">{{ shipment.recipient_address.city }}, {{ shipment.recipient_address.state }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <form method="POST" action="{% url 'delete_shipment' shipment.tracking_number %}">
+                {% csrf_token %}
+                <div class="mt-6">
+                    <label for="cancel_reason" class="block text-sm font-medium text-gray-700 mb-2">Reason for Cancellation</label>
+                    <select id="cancel_reason" name="cancel_reason" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md">
+                        <option value="mistake">Created by mistake</option>
+                        <option value="other_service">Using different shipping service</option>
+                        <option value="delayed">Shipment delayed too long</option>
+                        <option value="changed_mind">Changed my mind</option>
+                        <option value="address_error">Address error</option>
+                        <option value="other">Other reason</option>
+                    </select>
+                    
+                    <div id="other_reason_container" class="mt-3 hidden">
+                        <label for="other_reason" class="block text-sm font-medium text-gray-700 mb-2">Please specify:</label>
+                        <textarea id="other_reason" name="other_reason" rows="2" class="shadow-sm focus:ring-red-500 focus:border-red-500 mt-1 block w-full sm:text-sm border-gray-300 rounded-md"></textarea>
+                    </div>
+                </div> 
+                <div class="mt-6 sm:mt-4 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Cancel Shipment
+                    </button>
+                    <a href="{% url 'shipment_view' shipment.id %}" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:mt-0 sm:w-auto sm:text-sm">
+                        Go Back
+                    </a>
+                </div>
+            </form>   
+            <div class="mt-6 pt-5 border-t border-gray-200">
+                <h4 class="text-sm font-medium text-gray-700 mb-2">Cancellation Policy</h4>
+                <p class="text-xs text-gray-500">
+                    Shipments can be canceled without fee if they haven't been processed yet. Cancellations for shipments that are already in transit may incur additional fees depending on the carrier and current status.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const reasonSelect = document.getElementById('cancel_reason');
+        const otherReasonContainer = document.getElementById('other_reason_container');
+        
+        reasonSelect.addEventListener('change', function() {
+            if (this.value === 'other') {
+                otherReasonContainer.classList.remove('hidden');
+            } else {
+                otherReasonContainer.classList.add('hidden');
+            }
+        });
+    });
+</script>
+{% endblock %}    
