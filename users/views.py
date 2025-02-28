@@ -819,3 +819,61 @@ def delete_shipment(request, tracking_number):
     
     # If not POST, redirect to the cancel page
     return redirect('cancel_shipment', tracking_number=tracking_number)
+
+
+@login_required
+def review_list(request):
+    """View to display the user's reviews and all public reviews"""
+    user_reviews = Review.objects.filter(user=request.user)
+    recent_reviews = Review.objects.exclude(user=request.user)[:5]
+    
+    context = {
+        'user_reviews': user_reviews,
+        'recent_reviews': recent_reviews,
+    }
+    
+    return render(request, 'review.html', context)
+
+@login_required
+def add_review(request):
+    """View to add a new review"""
+    if request.method == 'POST':
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.user = request.user
+            review.save()
+            messages.success(request, 'Your review has been submitted successfully!')
+            return redirect('review_list')
+    else:
+        form = ReviewForm()
+    
+    return render(request, 'edit_review.html', {'form': form})
+
+@login_required
+def edit_review(request, review_id):
+    """View to edit an existing review"""
+    review = get_object_or_404(Review, id=review_id, user=request.user)
+    
+    if request.method == 'POST':
+        form = ReviewForm(request.POST, instance=review)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your review has been updated successfully!')
+            return redirect('review_list')
+    else:
+        form = ReviewForm(instance=review)
+    return render(request, 'edit_review.html', {'form': form, 'review': review})
+
+
+@login_required
+def delete_review(request, review_id):
+    """View to delete a review"""
+    review = get_object_or_404(Review, id=review_id, user=request.user)
+    
+    if request.method == 'POST':
+        review.delete()
+        messages.success(request, 'Your review has been deleted successfully!')
+        return redirect('review_list')
+    
+    return render(request, 'delete_review.html', {'review': review})

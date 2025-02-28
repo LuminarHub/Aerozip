@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.core.validators import MinValueValidator, MaxValueValidator
 # Create your models here.
 from django.contrib.auth.models import AbstractBaseUser,PermissionsMixin,BaseUserManager
 from django.db.models import Max
@@ -271,7 +271,29 @@ class Receipt(models.Model):
 
 
 
-
+class Review(models.Model):
+    RATING_CHOICES = [
+        (1, '1 - Poor'),
+        (2, '2 - Below Average'),
+        (3, '3 - Average'),
+        (4, '4 - Good'),
+        (5, '5 - Excellent'),
+    ]
+    
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='reviews')
+    shipment_id = models.CharField(max_length=20, blank=True, null=True)
+    rating = models.IntegerField(choices=RATING_CHOICES, validators=[MinValueValidator(1), MaxValueValidator(5)])
+    title = models.CharField(max_length=100)
+    comment = models.TextField()
+    delivery_satisfaction = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"{self.user.username}'s Review - {self.rating} stars"
 
 
 

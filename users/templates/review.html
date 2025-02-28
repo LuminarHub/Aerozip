@@ -1,0 +1,148 @@
+{% extends 'user_home.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Top Bar -->
+<header class="bg-white shadow-sm">
+    <div class="flex items-center justify-between px-8 py-4">
+        <div class="flex items-center space-x-4">
+            <h1 class="text-2xl font-bold text-gray-900">Reviews & Feedback</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-3">
+                <img src="{% static 'images/profile.png' %}" alt="Profile" class="w-11 h-10 rounded-full">
+                <span class="text-gray-700">{{ request.user.name }}</span>
+            </div>
+            <a href="{% url 'logout' %}" class="flex items-center px-4 py-3 text-red-600 hover:bg-gray-50 rounded-lg">
+                <i class="fas fa-sign-out-alt w-5"></i>
+                <span class="ml-3">Log Out</span>
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- Reviews Content -->
+<div class="p-8">
+    <!-- Quick Actions -->
+    <div class="flex justify-between items-center mb-8">
+        <h2 class="text-xl font-bold text-gray-900">Your Reviews</h2>
+        <a href="{% url 'add_review' %}" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+            <i class="fas fa-plus mr-2"></i> Write a Review
+        </a>
+    </div>
+
+    <!-- Your Reviews -->
+    <div class="bg-white rounded-xl shadow-sm mb-8">
+        <div class="p-6 border-b border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900">Your Feedback</h2>
+        </div>
+        <div class="p-6">
+            {% if user_reviews %}
+            <div class="space-y-6">
+                {% for review in user_reviews %}
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="flex items-center space-x-3 mb-3">
+                                <!-- Star Rating -->
+                                <div class="flex">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= review.rating %}
+                                            <i class="fas fa-star text-yellow-400"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-gray-300"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                {% if review.shipment_id %}
+                                    <span class="text-gray-500">#{{ review.shipment_id }}</span>
+                                {% endif %}
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ review.title }}</h3>
+                            <div class="text-gray-600 mb-2">
+                                <p>{{ review.comment }}</p>
+                            </div>
+                            <div class="text-gray-500 text-sm">
+                                <p>{{ review.created_at|date:"F d, Y" }}</p>
+                                <p>
+                                    {% if review.delivery_satisfaction %}
+                                        <span class="text-green-600"><i class="fas fa-check-circle mr-1"></i> Satisfied with delivery</span>
+                                    {% else %}
+                                        <span class="text-red-600"><i class="fas fa-times-circle mr-1"></i> Not satisfied with delivery</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <a href="{% url 'edit_review' review.id %}" class="text-blue-600 hover:text-blue-700">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'delete_review' review.id %}" class="text-red-600 hover:text-red-700">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <div class="text-gray-400 mb-4">
+                    <i class="fas fa-comment-slash text-5xl"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No Reviews Yet</h3>
+                <p class="text-gray-500 mb-4">You haven't written any reviews. Share your experience with our delivery service!</p>
+                <a href="{% url 'add_review' %}" class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    Write Your First Review
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Community Reviews -->
+    <div class="bg-white rounded-xl shadow-sm">
+        <div class="p-6 border-b border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900">Recent Community Reviews</h2>
+        </div>
+        <div class="p-6">
+            {% if recent_reviews %}
+            <div class="space-y-6">
+                {% for review in recent_reviews %}
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <div>
+                        <div class="flex items-center space-x-3 mb-2">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-blue-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">{{ review.user.get_full_name|default:review.user.username }}</p>
+                                <p class="text-gray-500 text-sm">{{ review.created_at|date:"F d, Y" }}</p>
+                            </div>
+                        </div>
+                        <div class="ml-13 pl-10">
+                            <div class="flex mb-2">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}
+                                        <i class="fas fa-star text-yellow-400"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-gray-300"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ review.title }}</h3>
+                            <p class="text-gray-600 mb-2">{{ review.comment }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <p class="text-gray-500">No community reviews available yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

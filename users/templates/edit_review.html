@@ -1,0 +1,89 @@
+{% extends 'user_home.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Top Bar -->
+<header class="bg-white shadow-sm">
+    <div class="flex items-center justify-between px-8 py-4">
+        <div class="flex items-center space-x-4">
+            <h1 class="text-2xl font-bold text-gray-900">Write a Review</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-3">
+                <img src="{% static 'images/profile.png' %}" alt="Profile" class="w-11 h-10 rounded-full">
+                <span class="text-gray-700">{{ request.user.name }}</span>
+            </div>
+            <a href="{% url 'logout' %}" class="flex items-center px-4 py-3 text-red-600 hover:bg-gray-50 rounded-lg">
+                <i class="fas fa-sign-out-alt w-5"></i>
+                <span class="ml-3">Log Out</span>
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- Add Review Content -->
+<div class="p-8">
+    <div class="bg-white rounded-xl shadow-sm mb-8">
+        <div class="p-6 border-b border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900">Share Your Experience</h2>
+        </div>
+        <div class="p-6">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.shipment_id.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-900">{{ form.shipment_id.label }}</label>
+                        {{ form.shipment_id }}
+                        {% if form.shipment_id.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.shipment_id.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.rating.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-900">Rating</label>
+                        {{ form.rating }}
+                        {% if form.rating.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.rating.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="{{ form.title.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-900">Review Title</label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.title.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.comment.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-900">Your Review</label>
+                    {{ form.comment }}
+                    {% if form.comment.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.comment.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        {{ form.delivery_satisfaction }}
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="{{ form.delivery_satisfaction.id_for_label }}" class="font-medium text-gray-900">{{ form.delivery_satisfaction.label }}</label>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-4">
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                        Submit Review
+                    </button>
+                    <a href="{% url 'review_list' %}" class="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -18,7 +18,21 @@ class AddressForm(forms.ModelForm):
         exclude = ['user']
         
         
-
+class ReviewForm(forms.ModelForm):
+    class Meta:
+        model = Review
+        fields = ['shipment_id', 'rating', 'title', 'comment', 'delivery_satisfaction']
+        widgets = {
+            'shipment_id': forms.TextInput(attrs={'class': 'rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5'}),
+            'rating': forms.Select(attrs={'class': 'rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5'}),
+            'title': forms.TextInput(attrs={'class': 'rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5'}),
+            'comment': forms.Textarea(attrs={'class': 'rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5', 'rows': 4}),
+            'delivery_satisfaction': forms.CheckboxInput(attrs={'class': 'w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500'})
+        }
+        labels = {
+            'shipment_id': 'Shipment ID (Optional)',
+            'delivery_satisfaction': 'Were you satisfied with the delivery?'
+        }
 # class ShipmentForm(forms.ModelForm):
 #     recipient_address = forms.ModelChoiceField(queryset=None)
     

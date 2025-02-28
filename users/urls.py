@@ -24,4 +24,8 @@ urlpatterns =[
     path('shipment/<str:tracking_number>/receipt/download/', download_receipt, name='download_receipt'),
     path('shipments/<str:tracking_number>/cancel/', cancel_shipment, name='cancel_shipment'),
     path('shipments/<str:tracking_number>/delete/', delete_shipment, name='delete_shipment'),
+    path('reviews/', review_list, name='review_list'),
+    path('reviews/add/', add_review, name='add_review'),
+    path('reviews/edit/<int:review_id>/', edit_review, name='edit_review'),
+    path('reviews/delete/<int:review_id>/', delete_review, name='delete_review'),
 ]

@@ -225,21 +225,21 @@
                                     <a href="{% url 'my-track' shipment.tracking_number %}" class="text-green-600 hover:text-green-900 bg-green-50 rounded-full p-2" title="Track Shipment">
                                         <i class="fas fa-map-marker-alt"></i>
                                     </a>
-                                    <div class="relative" x-data="{ open: false }">
+                                    {% comment %} <div class="relative" x-data="{ open: false }">
                                         <button @click="open = !open" class="text-gray-600 hover:text-gray-900 bg-gray-50 rounded-full p-2" title="More Options">
                                             <i class="fas fa-ellipsis-v"></i>
                                         </button>
                                         <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
-                                            {% comment %} <div class="py-1" role="none">
+                                             <div class="py-1" role="none">
                                                 <a href="" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Download Label</a>
                                                 <a href="" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">View Receipt</a>
                                                 {% if shipment.status == 'pending' or shipment.status == 'processing' %}
                                                 <a href="" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Edit Shipment</a>
                                                 <a href="" class="text-red-600 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem">Cancel Shipment</a>
                                                 {% endif %}
-                                            </div> {% endcomment %}
+                                            </div> 
                                         </div>
-                                    </div>
+                                    </div> {% endcomment %}
                                 </div>
                             </td>
                         </tr>
